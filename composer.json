@@ -25,5 +25,10 @@
         "psr-4": {
             "PCore\\RpcServer\\": "src/"
         }
+    },
+    "extra": {
+        "pcore": {
+            "config": "PCore\\RpcServer\\ConfigProvider"
+        }
     }
 }
