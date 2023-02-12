@@ -9,7 +9,6 @@ use InvalidArgumentException;
 use PCore\Di\Reflection;
 use PCore\HttpMessage\Response as PsrResponse;
 use PCore\HttpMessage\Stream\StandardStream;
-use PCore\JsonRpc\Messages\{Error, Request, Response as RpcResponse};
 use PCore\RpcServer\Contracts\KernelInterface;
 use PCore\Utils\Arr;
 use Psr\Http\Message\{ResponseInterface, ServerRequestInterface};
@@ -44,7 +43,8 @@ class Kernel implements KernelInterface
             $result = call($service, $rpcRequest->getParams());
             $psrResponse = new PsrResponse();
             if ($rpcRequest->hasId()) {
-                $psrResponse = $psrResponse->withHeader('Content-Type', 'application/json; charset=utf-8')
+                $psrResponse = $psrResponse
+                    ->withHeader('Content-Type', 'application/json; charset=utf-8')
                     ->withBody(StandardStream::create(json_encode([
                         'jsonrpc' => $rpcRequest->getJsonRpc(),
                         'result' => $result,
@@ -55,16 +55,11 @@ class Kernel implements KernelInterface
         } catch (Throwable $e) {
             $psrResponse = new PsrResponse();
             if (!isset($rpcRequest) || ($rpcRequest->hasId())) {
-                $rpcResponse = new RpcResponse(
-                    null,
-                    isset($rpcRequest) ? $rpcRequest->getId() : null,
-                    new Error($e->getCode(), $e->getMessage(), [
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine(),
-                        'trace' => $e->getTrace()
-                    ])
+                $rpcResponse = new Response(null, isset($rpcRequest) ? $rpcRequest->getId() : null,
+                    new Error($e->getCode(), $e->getMessage())
                 );
-                $psrResponse = $psrResponse->withHeader('Content-Type', 'application/json; charset=utf-8')
+                $psrResponse = $psrResponse
+                    ->withHeader('Content-Type', 'application/json; charset=utf-8')
                     ->withBody(StandardStream::create(json_encode($rpcResponse, JSON_UNESCAPED_UNICODE)));
             }
             return $psrResponse;
