@@ -6,12 +6,14 @@ namespace PCore\RpcServer;
 
 use BadMethodCallException;
 use InvalidArgumentException;
+use PCore\Di\Context;
 use PCore\Di\Reflection;
 use PCore\HttpMessage\Response as PsrResponse;
 use PCore\HttpMessage\Stream\StandardStream;
 use PCore\RpcServer\Contracts\KernelInterface;
+use PCore\RpcServer\Contracts\RpcServerRequestInterface;
 use PCore\Utils\Arr;
-use Psr\Http\Message\{ResponseInterface, ServerRequestInterface};
+use Psr\Http\Message\ResponseInterface;
 use ReflectionException;
 use ReflectionMethod;
 use Throwable;
@@ -30,11 +32,14 @@ class Kernel implements KernelInterface
     protected array $services = [];
 
     /**
-     * @param ServerRequestInterface $request
+     * @param RpcServerRequestInterface $request
      * @return ResponseInterface
      */
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function handle(RpcServerRequestInterface $request): ResponseInterface
     {
+        // TODO
+        $container = Context::getContainer();
+        $container->set(RpcServerRequestInterface::class, $request);
         try {
             $rpcRequest = Request::createFromPsrRequest($request);
             if (is_null($service = $this->getService($rpcRequest->getMethod()))) {

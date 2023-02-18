@@ -6,7 +6,7 @@ namespace PCore\RpcServer;
 
 use InvalidArgumentException;
 use JsonSerializable;
-use Psr\Http\Message\ServerRequestInterface;
+use PCore\RpcServer\Contracts\RpcServerRequestInterface;
 
 /**
  * Class Request
@@ -34,10 +34,10 @@ class Request implements JsonSerializable
     }
 
     /**
-     * @param ServerRequestInterface $request
+     * @param RpcServerRequestInterface $request
      * @return static
      */
-    public static function createFromPsrRequest(ServerRequestInterface $request): static
+    public static function createFromPsrRequest(RpcServerRequestInterface $request): static
     {
         if (!str_contains($request->getHeaderLine('Content-Type'), 'application/json')) {
             throw new InvalidArgumentException('Неверный запрос', -32600);
