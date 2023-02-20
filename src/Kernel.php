@@ -10,10 +10,11 @@ use PCore\Di\Context;
 use PCore\Di\Reflection;
 use PCore\HttpMessage\Response as PsrResponse;
 use PCore\HttpMessage\Stream\StandardStream;
-use PCore\RpcServer\Contracts\KernelInterface;
-use PCore\RpcServer\Contracts\RpcServerRequestInterface;
+use PCore\RpcServer\Contracts\{KernelInterface, RpcServerRequestInterface};
 use PCore\Utils\Arr;
+use Psr\Container\{ContainerExceptionInterface, NotFoundExceptionInterface};
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerInterface;
 use ReflectionException;
 use ReflectionMethod;
 use Throwable;
@@ -34,10 +35,12 @@ class Kernel implements KernelInterface
     /**
      * @param RpcServerRequestInterface $request
      * @return ResponseInterface
+     * @throws ReflectionException
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function handle(RpcServerRequestInterface $request): ResponseInterface
     {
-        // TODO
         $container = Context::getContainer();
         $container->set(RpcServerRequestInterface::class, $request);
         try {
@@ -63,6 +66,8 @@ class Kernel implements KernelInterface
                 $rpcResponse = new Response(null, isset($rpcRequest) ? $rpcRequest->getId() : null,
                     new Error($e->getCode(), $e->getMessage())
                 );
+                $logger = $container->make(LoggerInterface::class);
+                $logger->get('rpcError')->debug($e, []);
                 $psrResponse = $psrResponse
                     ->withHeader('Content-Type', 'application/json; charset=utf-8')
                     ->withBody(StandardStream::create(json_encode($rpcResponse, JSON_UNESCAPED_UNICODE)));
