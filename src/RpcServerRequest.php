@@ -6,9 +6,11 @@ namespace PCore\RpcServer;
 
 use PCore\HttpMessage\Bags\{HeaderBag, ParameterBag};
 use PCore\HttpMessage\Stream\StandardStream;
+use PCore\HttpMessage\Uri;
 use PCore\RpcServer\Bags\ServerBag;
 use PCore\RpcServer\Contracts\RpcServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * Class RpcServerRequest
@@ -38,7 +40,11 @@ class RpcServerRequest implements RpcServerRequestInterface
      */
     protected ?StreamInterface $body = null;
 
-    public function __construct(array $headers = [])
+    public function __construct(
+        protected string|UriInterface $uri,
+        protected string              $method, array $headers = [],
+        string                        $protocolVersion = '1.1'
+    )
     {
         $this->serverParams = new ServerBag();
         $this->attributes = new ParameterBag();
@@ -54,7 +60,50 @@ class RpcServerRequest implements RpcServerRequestInterface
     {
         $server = $request->server;
         $header = $request->header;
-        $psrRequest = new static($header);
+        $uri = (new Uri())->withScheme(isset($server['https']) && $server['https'] !== 'off' ? 'https' : 'http');
+        $hasPort = false;
+        if (isset($server['http_host'])) {
+            $hostHeaderParts = explode(':', $server['http_host']);
+            $uri = $uri->withHost($hostHeaderParts[0]);
+            if (isset($hostHeaderParts[1])) {
+                $hasPort = true;
+                $uri = $uri->withPort($hostHeaderParts[1]);
+            }
+        } else if (isset($server['server_name'])) {
+            $uri = $uri->withHost($server['server_name']);
+        } else if (isset($server['server_addr'])) {
+            $uri = $uri->withHost($server['server_addr']);
+        } else if (isset($header['host'])) {
+            $hasPort = true;
+            if (strpos($header['host'], ':')) {
+                [$host, $port] = explode(':', $header['host'], 2);
+                if ($port != $uri->getDefaultPort()) {
+                    $uri = $uri->withPort($port);
+                }
+            } else {
+                $host = $header['host'];
+            }
+            $uri = $uri->withHost($host);
+        }
+        if (!$hasPort && isset($server['server_port'])) {
+            $uri = $uri->withPort($server['server_port']);
+        }
+        $hasQuery = false;
+        if (isset($server['request_uri'])) {
+            $requestUriParts = explode('?', $server['request_uri']);
+            $uri = $uri->withPath($requestUriParts[0]);
+            if (isset($requestUriParts[1])) {
+                $hasQuery = true;
+                $uri = $uri->withQuery($requestUriParts[1]);
+            }
+        }
+        if (!$hasQuery && isset($server['query_string'])) {
+            $uri = $uri->withQuery($server['query_string']);
+        }
+        $protocol = isset($server['server_protocol'])
+            ? str_replace('HTTP/', '', $server['server_protocol'])
+            : '1.1';
+        $psrRequest = new static($uri, $request->getMethod(), $header, $protocol);
         $psrRequest->serverParams = new ServerBag($server);
         $psrRequest->attributes = new ParameterBag($attributes);
         $psrRequest->body = StandardStream::create((string)$request->getContent());
@@ -113,6 +162,51 @@ class RpcServerRequest implements RpcServerRequestInterface
     public function getBody(): ?StreamInterface
     {
         return $this->body;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMethod(): string
+    {
+        return $this->method;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRealIp(): string
+    {
+        if ($xForwardedFor = $this->getHeaderLine('X-Forwarded-For')) {
+            $ips = explode(',', $xForwardedFor);
+            return trim($ips[0]);
+        }
+        if ($xRealIp = $this->getHeaderLine('X-Real-IP')) {
+            return $xRealIp;
+        }
+        $serverParams = $this->getServerParams();
+        return $serverParams['remote_addr'] ?? '127.0.0.1';
+    }
+
+    /**
+     * @return UriInterface
+     */
+    public function getUri(): UriInterface
+    {
+        return $this->uri;
+    }
+
+    /**
+     * @return string
+     */
+    public function url(): string
+    {
+        $uri = $this->getUri();
+        $url = $uri->getPath();
+        if (!empty($query = $uri->getQuery())) {
+            $url .= '?' . $query;
+        }
+        return $url;
     }
 
 }
