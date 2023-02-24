@@ -209,4 +209,17 @@ class RpcServerRequest implements RpcServerRequestInterface
         return $url;
     }
 
+    /**
+     * @param $name
+     * @param $value
+     * @return RpcServerRequestInterface
+     */
+    public function withAttribute($name, $value): RpcServerRequestInterface
+    {
+        $new = clone $this;
+        $new->attributes = clone $this->attributes;
+        $new->attributes->set($name, $value);
+        return $new;
+    }
+
 }
