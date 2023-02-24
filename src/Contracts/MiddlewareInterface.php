@@ -15,6 +15,6 @@ interface MiddlewareInterface
     /**
      * @return mixed
      */
-    public function process();
+    public function process(RpcServerRequestInterface $request);
 
 }

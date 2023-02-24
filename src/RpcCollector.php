@@ -27,8 +27,7 @@ class RpcCollector extends AbstractCollector
     public static function collectClass(string $class, object $attribute): void
     {
         if ($attribute instanceof RpcService) {
-            $service = $attribute->name;
-            make(Kernel::class)->register($service, $class);
+            make(Kernel::class)->register($attribute->name, $class, $attribute->middlewares);
         }
     }
 

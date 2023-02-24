@@ -10,7 +10,7 @@ use PCore\Di\Context;
 use PCore\Di\Reflection;
 use PCore\HttpMessage\Response as PsrResponse;
 use PCore\HttpMessage\Stream\StandardStream;
-use PCore\RpcServer\Contracts\{KernelInterface, RpcServerRequestInterface};
+use PCore\RpcServer\Contracts\{KernelInterface, MiddlewareInterface, RpcServerRequestInterface};
 use PCore\Utils\Arr;
 use Psr\Container\{ContainerExceptionInterface, NotFoundExceptionInterface};
 use Psr\Http\Message\ResponseInterface;
@@ -48,7 +48,13 @@ class Kernel implements KernelInterface
             if (is_null($service = $this->getService($rpcRequest->getMethod()))) {
                 throw new BadMethodCallException('Метод не найден', -32601);
             }
-            $result = call($service, $rpcRequest->getParams());
+            if ($middlewareClass = array_shift($service['middleware'])) {
+                $middleware = $container->make($middlewareClass);
+                if ($middleware instanceof MiddlewareInterface) {
+                    $middleware->process($request);
+                }
+            }
+            $result = call($service['service'], $rpcRequest->getParams());
             $psrResponse = new PsrResponse();
             if ($rpcRequest->hasId()) {
                 $psrResponse = $psrResponse
@@ -88,17 +94,21 @@ class Kernel implements KernelInterface
     /**
      * @param string $name
      * @param string $class
+     * @param $middlewares
      * @return void
      * @throws ReflectionException
      */
-    public function register(string $name, string $class): void
+    public function register(string $name, string $class, $middlewares): void
     {
         if (isset($this->services[$name])) {
             throw new InvalidArgumentException('Сервис \'' . $name . '\' был зарегистрирован');
         }
         foreach (Reflection::methods($class, ReflectionMethod::IS_PUBLIC) as $reflectionMethod) {
             $reflectionMethodName = $reflectionMethod->getName();
-            $this->services[$name][$reflectionMethodName] = [$class, $reflectionMethodName];
+            $this->services[$name][$reflectionMethodName] = [
+                'service' => [$class, $reflectionMethodName],
+                'middleware' => $middlewares
+            ];
         }
     }
 
