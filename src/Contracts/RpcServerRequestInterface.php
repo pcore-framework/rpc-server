@@ -24,4 +24,18 @@ interface RpcServerRequestInterface
      */
     public function getBody(): ?StreamInterface;
 
+    /**
+     * @param $name
+     * @param $value
+     * @return mixed
+     */
+    public function withAttribute($name, $value): mixed;
+
+    /**
+     * @param $name
+     * @param $default
+     * @return mixed
+     */
+    public function getAttribute($name, $default = null): mixed;
+
 }

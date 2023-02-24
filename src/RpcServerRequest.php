@@ -42,8 +42,7 @@ class RpcServerRequest implements RpcServerRequestInterface
 
     public function __construct(
         protected string|UriInterface $uri,
-        protected string              $method, array $headers = [],
-        string                        $protocolVersion = '1.1'
+        protected string              $method, array $headers = []
     )
     {
         $this->serverParams = new ServerBag();
@@ -100,10 +99,7 @@ class RpcServerRequest implements RpcServerRequestInterface
         if (!$hasQuery && isset($server['query_string'])) {
             $uri = $uri->withQuery($server['query_string']);
         }
-        $protocol = isset($server['server_protocol'])
-            ? str_replace('HTTP/', '', $server['server_protocol'])
-            : '1.1';
-        $psrRequest = new static($uri, $request->getMethod(), $header, $protocol);
+        $psrRequest = new static($uri, $request->getMethod(), $header);
         $psrRequest->serverParams = new ServerBag($server);
         $psrRequest->attributes = new ParameterBag($attributes);
         $psrRequest->body = StandardStream::create((string)$request->getContent());
@@ -220,6 +216,16 @@ class RpcServerRequest implements RpcServerRequestInterface
         $new->attributes = clone $this->attributes;
         $new->attributes->set($name, $value);
         return $new;
+    }
+
+    /**
+     * @param $name
+     * @param $default
+     * @return mixed|null
+     */
+    public function getAttribute($name, $default = null): mixed
+    {
+        return $this->attributes->get($name, $default);
     }
 
 }

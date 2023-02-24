@@ -40,7 +40,7 @@ class Kernel implements KernelInterface
      */
     public function handle(RpcServerRequestInterface $request): ResponseInterface
     {
-        return (new RequestHandler($container, $this->services))->handle($request);
+        return (new RequestHandler($this->container, $this->services))->handle($request);
     }
 
     /**
