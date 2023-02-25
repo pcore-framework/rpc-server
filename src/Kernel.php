@@ -27,9 +27,7 @@ class Kernel implements KernelInterface
 
     final public function __construct(protected ContainerInterface $container)
     {
-
     }
-
 
     /**
      * @param RpcServerRequestInterface $request

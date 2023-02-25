@@ -40,6 +40,8 @@ class RpcServerRequest implements RpcServerRequestInterface
      */
     protected ?StreamInterface $body = null;
 
+    protected string $rpcMethod;
+
     public function __construct(
         protected string|UriInterface $uri,
         protected string              $method, array $headers = []
@@ -123,33 +125,41 @@ class RpcServerRequest implements RpcServerRequestInterface
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return bool|null
      */
-    public function hasHeader($name): ?bool
+    public function hasHeader(string $name): ?bool
     {
         return $this->headers->has($name);
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return mixed
      */
-    public function getHeader($name): mixed
+    public function getHeader(string $name): mixed
     {
         return $this->headers->get($name);
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return string
      */
-    public function getHeaderLine($name): string
+    public function getHeaderLine(string $name): string
     {
         if ($this->hasHeader($name)) {
             return implode(', ', $this->getHeader($name));
         }
         return '';
+    }
+
+    /**
+     * @return string
+     */
+    public function getMethod(): string
+    {
+        return $this->method;
     }
 
     /**
@@ -163,9 +173,18 @@ class RpcServerRequest implements RpcServerRequestInterface
     /**
      * @return string
      */
-    public function getMethod(): string
+    public function getRpcMethod(): string
     {
-        return $this->method;
+        return $this->rpcMethod;
+    }
+
+    /**
+     * @param string $rpcMethod
+     * @return void
+     */
+    public function setRpcMethod(string $rpcMethod): void
+    {
+        $this->rpcMethod = $rpcMethod;
     }
 
     /**
@@ -206,11 +225,11 @@ class RpcServerRequest implements RpcServerRequestInterface
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @param $value
      * @return RpcServerRequestInterface
      */
-    public function withAttribute($name, $value): RpcServerRequestInterface
+    public function withAttribute(string $name, $value): RpcServerRequestInterface
     {
         $new = clone $this;
         $new->attributes = clone $this->attributes;
@@ -219,11 +238,11 @@ class RpcServerRequest implements RpcServerRequestInterface
     }
 
     /**
-     * @param $name
-     * @param $default
+     * @param string $name
+     * @param null $default
      * @return mixed|null
      */
-    public function getAttribute($name, $default = null): mixed
+    public function getAttribute(string $name, $default = null): mixed
     {
         return $this->attributes->get($name, $default);
     }

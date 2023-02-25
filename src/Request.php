@@ -47,6 +47,7 @@ class Request implements JsonSerializable
         if (!isset($parts['jsonrpc'], $parts['method'])) {
             throw new InvalidArgumentException('Ошибка синтаксического анализа', -32700);
         }
+        $request->setRpcMethod($parts['method']);
         return new static($parts['method'], $parts['params'] ?? [], $parts['id'] ?? null, $parts['jsonrpc']);
     }
 
