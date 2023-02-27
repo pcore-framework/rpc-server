@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PCore\RpcServer\Events;
 
-use PCore\RpcServer\Contracts\RpcServerRequestInterface;
+use PCore\RpcMessage\Contracts\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -21,8 +21,8 @@ class OnRequest
     public float $requestedAt;
 
     public function __construct(
-        public RpcServerRequestInterface $request,
-        public ?ResponseInterface        $response = null
+        public ServerRequestInterface $request,
+        public ?ResponseInterface     $response = null
     )
     {
         $this->requestedAt = microtime(true);

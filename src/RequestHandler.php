@@ -5,17 +5,13 @@ declare(strict_types=1);
 namespace PCore\RpcServer;
 
 use BadMethodCallException;
-use PCore\HttpMessage\Response as PsrResponse;
-use PCore\HttpMessage\Stream\StandardStream;
-use PCore\RpcServer\Contracts\{MiddlewareInterface, RpcServerRequestInterface};
-use PCore\RpcServer\Contracts\RequestHandlerInterface;
+use PCore\RpcMessage\{Error, Request, Response, BaseResponse};
+use PCore\RpcMessage\Contracts\ServerRequestInterface;
+use PCore\RpcMessage\Stream\StandardStream;
+use PCore\RpcServer\Contracts\{MiddlewareInterface,RequestHandlerInterface};
 use PCore\Utils\Arr;
-use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Log\LoggerInterface;
-use ReflectionException;
 use Throwable;
 
 /**
@@ -34,15 +30,12 @@ class RequestHandler implements RequestHandlerInterface
     }
 
     /**
-     * @param RpcServerRequestInterface $request
+     * @param ServerRequestInterface $request
      * @return ResponseInterface
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws ReflectionException
      */
-    public function handle(RpcServerRequestInterface $request): ResponseInterface
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $this->container->set(RpcServerRequestInterface::class, $request);
+        $this->container->set(ServerRequestInterface::class, $request);
         try {
             $rpcRequest = Request::createFromPsrRequest($request);
             if (is_null($service = $this->getService($rpcRequest->getMethod()))) {
@@ -55,7 +48,7 @@ class RequestHandler implements RequestHandlerInterface
                 }
             }
             $result = call($service['service'], $rpcRequest->getParams());
-            $psrResponse = new PsrResponse();
+            $psrResponse = new BaseResponse();
             if ($rpcRequest->hasId()) {
                 $psrResponse = $psrResponse
                     ->withHeader('Content-Type', 'application/json; charset=utf-8')
@@ -67,13 +60,11 @@ class RequestHandler implements RequestHandlerInterface
             }
             return $psrResponse;
         } catch (Throwable $e) {
-            $psrResponse = new PsrResponse();
+            $psrResponse = new BaseResponse();
             if (!isset($rpcRequest) || ($rpcRequest->hasId())) {
                 $rpcResponse = new Response(null, isset($rpcRequest) ? $rpcRequest->getId() : null,
                     new Error($e->getCode(), $e->getMessage())
                 );
-                $logger = $this->container->make(LoggerInterface::class);
-                $logger->get('rpcError')->debug($e, []);
                 $psrResponse = $psrResponse
                     ->withHeader('Content-Type', 'application/json; charset=utf-8')
                     ->withBody(StandardStream::create(json_encode($rpcResponse, JSON_UNESCAPED_UNICODE)));

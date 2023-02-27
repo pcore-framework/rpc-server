@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PCore\RpcServer;
 
-use PCore\HttpMessage\Cookie;
-use PCore\HttpMessage\Stream\FileStream;
+use PCore\RpcMessage\Cookie;
+use PCore\RpcMessage\Stream\FileStream;
 use Psr\Http\Message\ResponseInterface;
 
 /**

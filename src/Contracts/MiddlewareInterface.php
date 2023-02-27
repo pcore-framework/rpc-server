@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PCore\RpcServer\Contracts;
 
+use PCore\RpcMessage\Contracts\ServerRequestInterface;
+
 /**
  * Interface MiddlewareInterface
  * @package PCore\RpcServer\Contracts
@@ -15,6 +17,6 @@ interface MiddlewareInterface
     /**
      * @return mixed
      */
-    public function process(RpcServerRequestInterface $request, RequestHandlerInterface $handler);
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler);
 
 }

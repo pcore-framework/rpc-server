@@ -6,8 +6,9 @@ namespace PCore\RpcServer;
 
 use InvalidArgumentException;
 use PCore\Di\Reflection;
-use PCore\RpcServer\Contracts\{KernelInterface, RpcServerRequestInterface};
-use Psr\Container\{ContainerExceptionInterface, ContainerInterface, NotFoundExceptionInterface};
+use PCore\RpcMessage\Contracts\ServerRequestInterface;
+use PCore\RpcServer\Contracts\{KernelInterface};
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use ReflectionException;
 use ReflectionMethod;
@@ -30,13 +31,10 @@ class Kernel implements KernelInterface
     }
 
     /**
-     * @param RpcServerRequestInterface $request
+     * @param ServerRequestInterface $request
      * @return ResponseInterface
-     * @throws ReflectionException
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
      */
-    public function handle(RpcServerRequestInterface $request): ResponseInterface
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         return (new RequestHandler($this->container, $this->services))->handle($request);
     }

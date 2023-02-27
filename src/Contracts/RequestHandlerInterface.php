@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PCore\RpcServer\Contracts;
 
+use PCore\RpcMessage\Contracts\ServerRequestInterface;
+
 /**
  * Interface RequestHandlerInterface
  * @package PCore\RpcServer\Contracts
@@ -13,9 +15,9 @@ interface RequestHandlerInterface
 {
 
     /**
-     * @param RpcServerRequestInterface $request
+     * @param ServerRequestInterface $request
      * @return mixed
      */
-    public function handle(RpcServerRequestInterface $request);
+    public function handle(ServerRequestInterface $request);
 
 }

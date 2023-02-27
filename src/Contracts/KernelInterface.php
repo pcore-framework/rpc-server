@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PCore\RpcServer\Contracts;
 
+use PCore\RpcMessage\Contracts\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -15,9 +16,9 @@ interface KernelInterface
 {
 
     /**
-     * @param RpcServerRequestInterface $request
+     * @param ServerRequestInterface $request
      * @return ResponseInterface
      */
-    public function handle(RpcServerRequestInterface $request): ResponseInterface;
+    public function handle(ServerRequestInterface $request): ResponseInterface;
 
 }
